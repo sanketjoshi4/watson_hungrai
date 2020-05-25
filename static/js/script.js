@@ -10,10 +10,14 @@ $(document).ready(function () {
             chat: '/chat'
         },
         msgs: {
+            greet: "Hello! I'm Albot Einstein, your personal Einstein bot. " +
+                "Ask me anything about myself. But before we proceed, what should I call you? " +
+                "Also, how familiar are you with my scientific work on a scale of 1-5? (5 being very)",
             error: "I'm sorry, I did not get that. Could you please try again?"
         }
     };
     initEvents();
+    addToChat(config.msgs.greet, true)
 });
 
 function chat(msg) {
@@ -41,12 +45,12 @@ function addToChat(msg, incoming) {
         msgHistoryWindow.append($(
             '<div class="incoming_msg">' +
             '   <div class="incoming_msg_img">' +
-            '       <img src="https://ptetutorials.com/images/user-profile.png" alt="sunil">' +
+            '       <img src="/static/img/ico.png">' +
             '   </div>' +
             '   <div class="received_msg">' +
             '       <div class="received_withd_msg">' +
             '           <p>' + msg + '</p>' +
-            '           <span class="time_date"> 11:01 AM    |    June 9</span>' +
+            '           <span class="time_date">' + moment().format('hh:mm a | MMM D, YYYY') + '</span>' +
             '       </div>' +
             '   </div>' +
             '</div>'
@@ -58,12 +62,14 @@ function addToChat(msg, incoming) {
             '<div class="outgoing_msg">' +
             '   <div class="sent_msg">' +
             '       <p>' + msg + '</p>' +
-            '       <span class="time_date"> 11:01 AM    |    June 9</span>' +
+            '       <span class="time_date">' + moment().format('hh:mm a | MMM D, YYYY') + '</span>' +
             '   </div>' +
             '</div>'
         ));
-
     }
+
+    var chatWindowJS = document.getElementsByClassName(config.elems.msgHistoryClass)[0];
+    chatWindowJS.scrollTo(0, chatWindowJS.scrollHeight);
 }
 
 function initEvents() {
@@ -74,7 +80,8 @@ function initEvents() {
             var msg = chatWindow.val();
             chatWindow.val('');
             addToChat(msg);
-            chat(msg)
+            chat(msg);
+
         }
     });
 
@@ -83,7 +90,7 @@ function initEvents() {
         var msg = chatWindow.val();
         chatWindow.val('');
         addToChat(msg);
-        chat(msg)
+        chat(msg);
     });
 }
 
