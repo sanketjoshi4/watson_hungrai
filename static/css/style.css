@@ -402,11 +402,11 @@ img {
 }
 
 .sent_msg p {
-    background: #a1e4f6 none repeat scroll 0 0;
+    background: #b1e5f3 none repeat scroll 0 0;
     border-radius: 3px;
     font-size: 14px;
     margin: 0;
-    color: #00718f;
+    color: #2a7082;
     padding: 5px 10px 5px 12px;
     width: 100%;
 }
@@ -462,7 +462,7 @@ h3 {
     font-size: 40px;
     font-weight: 800;
     font-family: inherit;
-    background-color: rgba(52, 21, 8, 0.41);
+    background-color: rgba(78, 102, 137, 0.65);
     padding: 10px;
 }
 

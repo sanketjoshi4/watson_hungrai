@@ -1,5 +1,7 @@
 $(document).ready(function () {
+
     window.config = {
+
         elems: {
             botName: 'HungrAI',
             chatWindowClass: 'write_msg',
@@ -16,6 +18,7 @@ $(document).ready(function () {
             error: "I'm sorry, I did not get that. Could you please try again?"
         }
     };
+
     initEvents();
     addToChat(config.msgs.greet, true)
 });
@@ -25,9 +28,17 @@ function chat(msg) {
         url: config.urls.chat,
         contentType: 'application/json;charset=UTF-8',
         data: JSON.stringify({msg: msg}),
-        success: function (response) {
-            addToChat(response.output.generic[0].text, true);
-            console.log(response.output.generic[0].text);
+        success: function (resp) {
+            if (resp.type === 'entities') {
+                addToChat(resp.value, true);
+                console.log(resp.value);
+            } else if (resp.type === 'generic') {
+                addToChat(resp.value, true);
+                console.log(resp.value);
+            } else {
+                addToChat(config.msgs.error, true);
+                console.log(e.responseJSON);
+            }
         },
         error: function (e) {
             addToChat(config.msgs.error, true);
@@ -45,7 +56,7 @@ function addToChat(msg, incoming) {
         msgHistoryWindow.append($(
             '<div class="incoming_msg">' +
             '   <div class="incoming_msg_img">' +
-            '       <img src="/static/img/ico.png">' +
+            '       <img src="/static/img/icon_transparent_circle.png">' +
             '   </div>' +
             '   <div class="received_msg">' +
             '       <div class="received_withd_msg">' +
