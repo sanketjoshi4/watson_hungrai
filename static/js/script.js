@@ -29,12 +29,17 @@ function chat(msg) {
         contentType: 'application/json;charset=UTF-8',
         data: JSON.stringify({msg: msg}),
         success: function (resp) {
+
             if (resp.type === 'entities') {
+
                 addToChat(resp.value, true);
-                console.log(resp.value);
+                console.log('[entities]:' + resp.value);
+
             } else if (resp.type === 'generic') {
+
                 addToChat(resp.value, true);
                 console.log(resp.value);
+
             } else {
                 addToChat(config.msgs.error, true);
                 console.log(e.responseJSON);

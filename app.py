@@ -49,8 +49,11 @@ def chat():
     try:
         output = bot_response.get_result()['output']
         resp = {"type": None, "value": None}
-        if len(output['entities']) > 0:
-            resp = {"type": "entities", "value": output['entities'][0]['value']}
+        if len(output['entities']) > 1:
+            resp = {
+                "type": "entities",
+                "value": '\n'.join(['{}. {}'.format(i, v['value']) for i, v in enumerate(output['entities'])])
+            }
         else:
             resp = {"type": "generic", "value": output['generic'][0]['text']}
         return jsonify(resp)
