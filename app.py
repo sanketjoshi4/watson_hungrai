@@ -8,15 +8,6 @@ import csv
 
 uploads_dir = './uploads/'
 
-info_old = {
-    'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',  # API key
-    'api_version': '2020-04-01',
-    'service_url': 'https://api.us-south.assistant.watson.cloud.ibm.com/instances/148f5128-447c-4fa3-a050-26e716eeca8b',
-    # ^ [....]/v1/workspaces/... from legacy v1 workspace url
-    'assistant_id': '726e5374-be8e-4026-bc53-69f40e2c72e1',
-    'workspace_id': '87651692-6bd8-420c-922f-47547ffe6e7b'  # skill id
-}
-
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
     'api_version': '2020-04-01',
@@ -49,34 +40,38 @@ class MyCache:
 
     def __init__(self):
         MyCache.cache = SimpleCache()
-        MyCache.cache.set("cart", [])
+        MyCache.cache.set("cart", {})
 
     @staticmethod
     def cart_list():
         return MyCache.cache.get("cart")
 
     @staticmethod
-    def cart_add(item):
+    def cart_add(item, count=1):
         cart = MyCache.cache.get("cart")
-        if cart is None or len(cart) == 0:
-            cart = [item]
+        if cart is None or not cart:
+            cart = {item: count}
+        elif item not in cart:
+            cart[item] = count
         else:
-            cart.append(item)
+            cart[item] = cart[item] + count
         MyCache.cache.set("cart", cart)
         return True
 
     @staticmethod
     def cart_delete(item):
         cart = MyCache.cache.get("cart")
-        if cart is None or len(cart) == 0:
-            cart = []
-            return False
-        elif item not in cart:
+        if cart is None or not cart or item not in cart:
             return False
         else:
-            cart.remove(item)
+            del cart[item]
             MyCache.cache.set("cart", cart)
             return True
+
+    @staticmethod
+    def cart_clear():
+        MyCache.cache.set("cart", {})
+        return True
 
 
 MyCache()
@@ -115,17 +110,12 @@ def chat():
             }
         }
     )
+
     try:
         output = bot_response.get_result()['output']
         context = bot_response.get_result()['context']
-
-        # if len(output['entities']) > 1:
-        #     resp = {
-        #         "type": "entities",
-        #         "value": '\n'.join(['{}. {}'.format(i, v['value']) for i, v in enumerate(output['entities'])])
-        #     }
-        # else:
         return jsonify(handle_output(output))
+
     except:
         return None
 
@@ -135,20 +125,26 @@ def handle_output(output):
 
         intent = output['intents'][0]['intent']
 
+        count = 1
+        try:
+            count = int([v for i, v in enumerate(output['entities']) if v['entity'] == 'sys-number'][0]['value'])
+        except:
+            pass
+
         if intent == "cart_list":
 
-            cart_list = MyCache.cart_list()
+            cart_list = MyCache.cart_list()  # TODO : DATA CHANGE
             if cart_list is None or len(cart_list) == 0:
                 return {"type": "generic", "value": "You have not ordered anything yet"}
 
-            return {"type": "generic", "value": "You have ordered {}".format(', '.join(cart_list))}
+            return {"type": "generic", "value": "You have ordered {}".format(natural_list(cart_list))}
 
         if intent == 'cart_add':
 
             candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Item']
             if candidates is not None and candidates[0] is not None:
                 item = candidates[0]['value']
-                if MyCache.cart_add(item):
+                if MyCache.cart_add(item, count):
                     return {"type": "generic", "value": "{} has been added to your cart!".format(item)}
 
             return {
@@ -188,11 +184,31 @@ def handle_output(output):
                 "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
             }
 
+        if intent == 'cart_clear':
+
+            if MyCache.cart_clear():
+                return {
+                    "type": "generic",
+                    "value": "A fresh start. Is there anything else you need?"
+                }
+
+            return {
+                "type": "generic",
+                "value": "Apologies, I do not understand. Could you please repeat?"
+            }
+
         return {"type": "generic", "value": output['generic'][0]['text']}
 
     except:
 
         return {"type": "generic", "value": output['generic'][0]['text']}
+
+
+def natural_list(items):
+    content = ''
+    for item, count in items.items():
+        content += ' {} {}{},'.format(count, item, 's' if count > 1 else '')
+    return content[:-1]
 
 
 if __name__ == "__main__":
