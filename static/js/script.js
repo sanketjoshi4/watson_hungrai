@@ -6,7 +6,8 @@ $(document).ready(function () {
             botName: 'HungrAI',
             chatWindowClass: 'write_msg',
             msgHistoryClass: 'msg_history',
-            sendButtonClass: "msg_send_btn"
+            sendButtonClass: "msg_send_btn",
+            refreshBarClass: "refresh_bar"
         },
         urls: {
             chat: '/chat'
@@ -14,7 +15,11 @@ $(document).ready(function () {
         msgs: {
             greet: "Hello! Are you hungry? Look no further, I'm HungerAI, your personal food assistant! Can I have your name, please?",
             error: "I'm sorry, I did not get that. Could you please try again?"
-        }
+        },
+        status: {
+            end: false
+        },
+        text_to_speech_delay: 0
     };
 
     initEvents();
@@ -26,11 +31,27 @@ function chat(msg) {
         url: config.urls.chat,
         contentType: 'application/json;charset=UTF-8',
         data: JSON.stringify({msg: msg}),
+        cache: false,
         success: function (resp) {
 
             if (resp.type === 'generic') {
 
                 addToChat(resp.value, true);
+                console.log(resp.value);
+
+                setTimeout(function () {
+                    new Audio('/static/resources/text_to_speech_' + (parseInt(resp.dialog_counter) + 1) + '.wav').play();
+                }, config.text_to_speech_delay);
+
+            } else if (resp.type === 'end') {
+
+                addToChat(resp.value, true);
+                config.status.end = true;
+                $('.type_msg').hide();
+                $('.' + config.elems.refreshBarClass).show();
+                $('#refresh_btn').click(function () {
+                    window.location.href = '/';
+                });
                 console.log(resp.value);
 
             } else {
@@ -89,7 +110,6 @@ function initEvents() {
             chatWindow.val('');
             addToChat(msg);
             chat(msg);
-
         }
     });
 

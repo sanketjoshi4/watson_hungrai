@@ -1,4 +1,4 @@
-import json
+import json, os
 from ibm_watson import AssistantV2
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
@@ -7,6 +7,8 @@ from werkzeug.contrib.cache import SimpleCache
 import csv
 
 uploads_dir = './uploads/'
+resources_dir = './static/resources/'
+text_to_speech_file = 'text_to_speech'
 
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
@@ -21,6 +23,35 @@ assistant = AssistantV2(version=info['api_version'], authenticator=authenticator
 assistant.set_service_url(info['service_url'])
 assistant_id = info['assistant_id']
 info['session_id'] = assistant.create_session(assistant_id=assistant_id).get_result()['session_id']
+
+from ibm_watson import TextToSpeechV1
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+
+text_to_speech_credentials = {
+    "apikey": "BLKaQ3nnYTTKruLeb9dL8gtbtxjI856Zx9WFKy0spZET",
+    "iam_apikey_description": "Auto-generated for key ed5fac4a-bc22-4d9f-9859-2b248804035e",
+    "iam_apikey_name": "wdp-writer",
+    "iam_role_crn": "crn:v1:bluemix:public:iam::::serviceRole:Writer",
+    "iam_serviceid_crn": "crn:v1:bluemix:public:iam-identity::a/eed7635af9de4ec1a02ed80b7edae9dc::serviceid:ServiceId-d7acec2a-7f78-4eac-ba33-8407e8edca8b",
+    "url": "https://api.us-east.text-to-speech.watson.cloud.ibm.com/instances/30ac0c7e-f8e4-48e9-9222-59dbb1f4fc82",
+}
+
+text_to_speech_authenticator = IAMAuthenticator(text_to_speech_credentials['apikey'])
+text_to_speech_service = TextToSpeechV1(authenticator=text_to_speech_authenticator)
+text_to_speech_service.set_service_url(text_to_speech_credentials['url'])
+
+
+def text_to_speech(msg, filename):
+    dialog_counter = MyCache.get_update_dialog_counter()
+    os.rename('{}{}_{}.wav'.format(resources_dir, filename, dialog_counter),
+              '{}{}_{}.wav'.format(resources_dir, filename, dialog_counter + 1))
+    with open('{}{}_{}.wav'.format(resources_dir, filename, dialog_counter + 1), 'wb') as audio_file:
+        audio_file.write(
+            text_to_speech_service.synthesize(msg, voice='en-US_AllisonVoice', accept='audio/wav').get_result().content
+        )
+        audio_file.close()
+    return dialog_counter
+
 
 entity_items = []
 with open('data/entity_items.csv') as csvfile:
@@ -43,6 +74,7 @@ class MyCache:
         MyCache.cache.set("cart", {})
         MyCache.cache.set("context_item", None)
         MyCache.cache.set("context_intent", None)
+        MyCache.cache.set("dialog_counter", 0)
 
     @staticmethod
     def cart_list():
@@ -91,6 +123,12 @@ class MyCache:
     def set_context_intent(intent):
         return MyCache.cache.set("context_intent", intent)
 
+    @staticmethod
+    def get_update_dialog_counter():
+        dialog_counter = MyCache.cache.get("dialog_counter")
+        MyCache.cache.set("dialog_counter", dialog_counter + 1)
+        return dialog_counter
+
 
 MyCache()
 
@@ -132,13 +170,32 @@ def chat():
     try:
         output = bot_response.get_result()['output']
         context = bot_response.get_result()['context']
-        return jsonify(handle_output(output))
+        handled = handle_output(output, context)
+        if handled is not None and 'value' in handled:
+            msg = handled['value']
+            dialog_counter = text_to_speech(msg, 'text_to_speech')
+            handled['dialog_counter'] = dialog_counter
+        return jsonify(handled)
 
     except:
         return None
 
 
-def handle_output(output):
+# prevent cached responses
+@app.after_request
+def add_header(r):
+    """
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+
+def handle_output(output, context):
     # try:
 
     intent = output['intents'][0]['intent'] if len(output['intents']) > 0 else None
@@ -239,10 +296,10 @@ def handle_output(output):
         if candidates is not None and len(candidates) > 0 and candidates[0] is not None:
             ingredient = candidates[0]['value']
             if ingredient in ingr_item_dict:
+                items = natural_list(ingr_item_dict[ingredient], countless=True, already_list=True, shorten=True)
                 return {
                     "type": "generic",
-                    "value": "Within {}, we have {}. What would you like?".format(
-                        ingredient, natural_list(ingr_item_dict[ingredient], countless=True, already_list=True))
+                    "value": "Within {}, we have {}. What would you like?".format(ingredient, items)
                 }
             return {"type": "generic", "value": "I'm sorry, but we have nothing within {}".format(ingredient)}
 
@@ -264,6 +321,43 @@ def handle_output(output):
             "value": "Apologies, I do not understand. Could you please repeat?"
         }
 
+    if intent == 'checkout':
+
+        cart = MyCache.cart_list()
+        if cart is None or len(cart) == 0 or all([count == 0 for item, count in cart.items()]):
+            return {
+                "type": "generic",
+                "value": "Your cart is empty, please order something"
+            }
+
+        MyCache.set_context_intent('checkout_confirmation')
+        return {
+            "type": "generic",
+            "value": "You have ordered {}. Please confirm".format(natural_list(cart))
+        }
+
+    if intent == 'checkout_confirmation':
+
+        MyCache.set_context_intent(None)
+        MyCache.set_context_item(None)
+
+        if any([v['entity'] == 'Boolean' and v['value'] == 'yes' for i, v in enumerate(output['entities'])]):
+            name = None
+            try:
+                name = context['skills']['main skill']['user_defined']['name']
+            except:
+                pass
+            return {
+                "type": "end",
+                "value": "I am placing your order{}. Thank you for using HungerAI, and we'd be glad to have you back!".format(
+                    '!' if name is None else (' ' + name))
+            }
+
+        return {
+            "type": "generic",
+            "value": "Alright then. Please let me know what you want to change in your order"
+        }
+
     return {"type": "generic", "value": output['generic'][0]['text']}
 
     # except:
@@ -283,7 +377,7 @@ def decipher_order(output):
     return result
 
 
-def natural_list(items, countless=False, already_list=False):
+def natural_list(items, countless=False, already_list=False, shorten=False):
     content = ''
     distinct_count = len(items)
     distinct_counter = 0
@@ -292,9 +386,15 @@ def natural_list(items, countless=False, already_list=False):
         items = {item: 1 for item in items}
 
     for item, count in items.items():
+
+        if shorten and distinct_counter == 4:
+            content += ' and {} more items.'.format(distinct_count - distinct_counter)
+            break
+
         distinct_counter += 1
         if 1 < distinct_count == distinct_counter:
             content += ' and'
+
         if countless:
             content += ' {},'.format(item)
         elif count == 1:
