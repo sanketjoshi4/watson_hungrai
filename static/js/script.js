@@ -10,7 +10,8 @@ $(document).ready(function () {
             refreshBarClass: "refresh_bar"
         },
         urls: {
-            chat: '/chat'
+            chat: '/chat',
+            refresh: '/refresh'
         },
         msgs: {
             greet: "Hello! Are you hungry? Look no further, I'm HungerAI, your personal food assistant! Can I have your name, please?",
@@ -23,6 +24,16 @@ $(document).ready(function () {
     };
 
     initEvents();
+    $.post({
+        url: config.urls.refresh,
+        cache: false,
+        success: function (resp) {
+            console.log('refreshed!')
+        },
+        error: function (e) {
+            console.log('not refreshed! : ' + e.responseText)
+        }
+    });
     addToChat(config.msgs.greet, true)
 });
 

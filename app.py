@@ -1,14 +1,16 @@
-import json, os
+import json, os, csv, glob
 from ibm_watson import AssistantV2
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.contrib.cache import SimpleCache
-import csv
 
 uploads_dir = './uploads/'
 resources_dir = './static/resources/'
 text_to_speech_file = 'text_to_speech'
+
+
+
 
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
@@ -139,6 +141,15 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
+@app.route('/refresh', methods=['GET', 'POST'])
+def refresh():
+    existing_wav = glob.glob('{}{}_*.wav'.format(resources_dir, text_to_speech_file))[0].replace('\\', '/')
+    os.replace(existing_wav, '{}{}_0.wav'.format(resources_dir, text_to_speech_file))
+    MyCache.cache.set("cart", {})
+    MyCache.cache.set("context_item", None)
+    MyCache.cache.set("context_intent", None)
+    MyCache.cache.set("dialog_counter", 0)
+    return {}
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
