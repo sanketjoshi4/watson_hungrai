@@ -41,6 +41,8 @@ class MyCache:
     def __init__(self):
         MyCache.cache = SimpleCache()
         MyCache.cache.set("cart", {})
+        MyCache.cache.set("context_item", None)
+        MyCache.cache.set("context_intent", None)
 
     @staticmethod
     def cart_list():
@@ -72,6 +74,22 @@ class MyCache:
     def cart_clear():
         MyCache.cache.set("cart", {})
         return True
+
+    @staticmethod
+    def get_context_item():
+        return MyCache.cache.get("context_item")
+
+    @staticmethod
+    def set_context_item(item):
+        return MyCache.cache.set("context_item", item)
+
+    @staticmethod
+    def get_context_intent():
+        return MyCache.cache.get("context_intent")
+
+    @staticmethod
+    def set_context_intent(intent):
+        return MyCache.cache.set("context_intent", intent)
 
 
 MyCache()
@@ -123,11 +141,15 @@ def chat():
 def handle_output(output):
     # try:
 
-    intent = output['intents'][0]['intent']
+    intent = output['intents'][0]['intent'] if len(output['intents']) > 0 else None
+    context_intent = MyCache.get_context_intent()
+
+    if context_intent is not None or intent is None:
+        intent = context_intent
 
     if intent == "cart_list":
 
-        cart_list = MyCache.cart_list()  # TODO : DATA CHANGE
+        cart_list = MyCache.cart_list()
         if cart_list is None or len(cart_list) == 0:
             return {"type": "generic", "value": "You have not ordered anything yet"}
 
@@ -136,6 +158,40 @@ def handle_output(output):
     if intent == 'cart_add':
 
         order = decipher_order(output)
+        context_item = MyCache.get_context_item()
+
+        if context_item is not None and len(order) == 0:
+
+            denied = any([v['entity'] == 'Boolean' and v['value'] == 'no' for i, v in enumerate(output['entities'])])
+            if denied:
+                MyCache.set_context_intent(None)
+                MyCache.set_context_item(None)
+
+                return {
+                    "type": "generic",
+                    "value": "As you wish. What else would you like?"
+                }
+
+            count = 1
+            for i, v in enumerate(output['entities']):
+                if v['entity'] == 'sys-number':
+                    count = int(v['value'])
+
+            if MyCache.cart_add(context_item, count):
+                MyCache.set_context_intent(None)
+                MyCache.set_context_item(None)
+                return {
+                    "type": "generic",
+                    "value": "Alright... I've added {} to your cart!".format(natural_list({context_item: count}))
+                }
+
+            MyCache.set_context_intent(None)
+            MyCache.set_context_item(None)
+            return {
+                "type": "generic",
+                "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
+            }
+
         if all(MyCache.cart_add(item, count) for item, count in order.items()):
             return {"type": "generic", "value": "Alright... I've added {} to your cart!".format(natural_list(order))}
 
@@ -163,14 +219,30 @@ def handle_output(output):
 
     if intent == 'item_list':
 
+        candidate_items = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Item']
+        if candidate_items is not None and len(candidate_items) > 0 and candidate_items[0] is not None:
+            item = candidate_items[0]['value']
+            if item in [i[1] for i in entity_items]:
+                MyCache.set_context_item(item)
+                MyCache.set_context_intent("cart_add")
+                return {
+                    "type": "generic",
+                    "value": "Yes, we do have {}. Should I add that?".format(item)
+                }
+
+            # return {
+            #     "type": "generic",
+            #     "value": "I'm sorry, but we do not have {}".format(item)
+            # }
+
         candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Ingredient']
         if candidates is not None and len(candidates) > 0 and candidates[0] is not None:
             ingredient = candidates[0]['value']
             if ingredient in ingr_item_dict:
-                items = ", ".join(ingr_item_dict[ingredient])  # TODO : Better enlist
                 return {
                     "type": "generic",
-                    "value": "Within {}, we have {}. What would you like?".format(ingredient, items)
+                    "value": "Within {}, we have {}. What would you like?".format(
+                        ingredient, natural_list(ingr_item_dict[ingredient], countless=True, already_list=True))
                 }
             return {"type": "generic", "value": "I'm sorry, but we have nothing within {}".format(ingredient)}
 
@@ -211,14 +283,17 @@ def decipher_order(output):
     return result
 
 
-def natural_list(items, countless=False):
+def natural_list(items, countless=False, already_list=False):
     content = ''
     distinct_count = len(items)
     distinct_counter = 0
 
+    if already_list:
+        items = {item: 1 for item in items}
+
     for item, count in items.items():
         distinct_counter += 1
-        if distinct_counter == distinct_count:
+        if 1 < distinct_count == distinct_counter:
             content += ' and'
         if countless:
             content += ' {},'.format(item)

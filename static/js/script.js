@@ -28,12 +28,7 @@ function chat(msg) {
         data: JSON.stringify({msg: msg}),
         success: function (resp) {
 
-            if (resp.type === 'entities') {
-
-                addToChat(resp.value, true);
-                console.log('[entities]:' + resp.value);
-
-            } else if (resp.type === 'generic') {
+            if (resp.type === 'generic') {
 
                 addToChat(resp.value, true);
                 console.log(resp.value);

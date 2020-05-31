@@ -31,21 +31,16 @@
             else $('head > link').filter(':first').replaceWith(defaultCSS);
         }
 
-{#
-        $(document).ready(function () {
-            var iframe_height = parseInt($('html').height());
-            window.parent.postMessage(iframe_height, 'https://bootsnipp.com');
-        });
-#}
     </script>
 </head>
 
 <body>
 <div class="container">
-    {#    <div class="messaging" style="background-color: #d9534f; color: #e4b9b9">#}
-    <h3 class=" text-center"><img src="/static/img/icon_transparent.png" height="40px"
-                                  style="vertical-align: center; margin-bottom: 10px">&nbspHungrAI </h3>
-    {#    </div>#}
+    <h3 class=" text-center">
+        <img src="/static/img/icon_transparent.png" height="40px" style="vertical-align: center; margin-bottom: 10px">
+        &nbspHungrAI
+        <img src="/static/img/icon_transparent.png" height="40px" style="vertical-align: center; margin-bottom: 10px">
+    </h3>
     <div class="messaging">
         <div class="inbox_msg">
             <div class="mesgs">
