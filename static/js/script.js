@@ -12,9 +12,7 @@ $(document).ready(function () {
             chat: '/chat'
         },
         msgs: {
-            greet: "Hello! I'm Albot Einstein, your personal Einstein bot. " +
-                "Ask me anything about myself. But before we proceed, what should I call you? " +
-                "Also, how familiar are you with my scientific work on a scale of 1-5? (5 being very)",
+            greet: "Hello! Are you hungry? Look no further, I'm HungerAI, your personal food assistant! Can I have your name, please?",
             error: "I'm sorry, I did not get that. Could you please try again?"
         }
     };
@@ -42,7 +40,6 @@ function chat(msg) {
 
             } else {
                 addToChat(config.msgs.error, true);
-                console.log(e.responseJSON);
             }
         },
         error: function (e) {
