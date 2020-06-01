@@ -48,7 +48,7 @@ def text_to_speech(msg, filename):
               '{}{}_{}.wav'.format(resources_dir, filename, dialog_counter + 1))
     with open('{}{}_{}.wav'.format(resources_dir, filename, dialog_counter + 1), 'wb') as audio_file:
         audio_file.write(
-            text_to_speech_service.synthesize(msg, voice='en-US_AllisonVoice', accept='audio/wav').get_result().content
+            text_to_speech_service.synthesize(msg, voice='en-US_LisaV3Voice', accept='audio/wav').get_result().content
         )
         audio_file.close()
     return dialog_counter

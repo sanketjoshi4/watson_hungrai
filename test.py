@@ -19,7 +19,7 @@ def text_to_speech(msg, num):
     with open('./static/resources/recorded/{}.wav'.format(num), 'wb') as audio_file:
         audio_file.write(
             text_to_speech_service.synthesize(
-                msg, voice='en-US_MichaelVoice', accept='audio/wav'
+                msg, voice='en-US_KevinV3Voice 	', accept='audio/wav'
             ).get_result().content
         )
         audio_file.close()
