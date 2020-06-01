@@ -18,7 +18,8 @@ $(document).ready(function () {
             error: "I'm sorry, I did not get that. Could you please try again?"
         },
         status: {
-            end: false
+            end: false,
+            recording: false
         },
         text_to_speech_delay: 0
     };
@@ -124,6 +125,7 @@ function initEvents() {
         }
     });
 
+/*
     var sendButton = $('.' + config.elems.sendButtonClass);
     sendButton.click(function () {
         var msg = chatWindow.val();
@@ -131,6 +133,7 @@ function initEvents() {
         addToChat(msg);
         chat(msg);
     });
+*/
 }
 
 navigator.mediaDevices.getUserMedia({audio: true})
@@ -147,7 +150,7 @@ function handlerFunction(stream) {
             let blob = new Blob(audioChunks, {type: 'audio/wav'});
             recordedAudio.src = URL.createObjectURL(blob);
             recordedAudio.controls = true;
-            recordedAudio.autoplay = true;
+            recordedAudio.autoplay = false;
             sendData(blob)
         }
     }
@@ -176,18 +179,15 @@ async function sendData(data) {
 }
 
 record.onclick = e => {
-    console.log('I was clicked')
-    record.disabled = true;
-    record.style.backgroundColor = "blue"
-    stopRecord.disabled = false;
-    audioChunks = [];
-    rec.start();
-}
+    if (config.status.recording == false) {
+        config.status.recording = true;
+        record.style.backgroundColor = "#8f4039";
+        audioChunks = [];
+        rec.start();
+    } else {
+        config.status.recording = false;
+        record.style.backgroundColor = "#05728f";
+        rec.stop();
+    }
+};
 
-stopRecord.onclick = e => {
-    console.log("I was clicked")
-    record.disabled = false;
-    stop.disabled = true;
-    record.style.backgroundColor = "red"
-    rec.stop();
-}
