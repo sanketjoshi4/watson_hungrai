@@ -1,0 +1,122 @@
+<style type="text/css">
+    #record {
+        background-color: red; /* Green */
+        border-width: medium;
+        border-color: black;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        max-width: 50%;
+        max-height: 15%;
+        border-radius: 50%;
+        left: 100px;
+        right: 100px;
+        position: relative;
+    }
+
+    #stopRecord {
+        background-color: green; /* Green */
+        border-width: medium;
+        border-color: black;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        max-width: 50%;
+        max-height: 15%;
+        border-radius: 50%;
+        left: 100px;
+        right: 100px;
+        position: relative;
+    }
+
+    h2 {
+        left: 100px;
+        position: relative;
+    }
+
+    #recordedAudio {
+        left: 100px;
+        right: 100px;
+        position: relative;
+    }
+</style>
+
+<h2>Record</h2>
+<p>
+    <button id=record></button>
+    <button id=stopRecord disabled>Stop</button>
+</p>
+<p>
+    <audio id=recordedAudio></audio>
+
+</p>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script type="text/javascript">
+    navigator.mediaDevices.getUserMedia({audio: true})
+        .then(stream => {
+            handlerFunction(stream)
+        });
+
+
+    function handlerFunction(stream) {
+        rec = new MediaRecorder(stream);
+        rec.ondataavailable = e => {
+            audioChunks.push(e.data);
+            if (rec.state == "inactive") {
+                let blob = new Blob(audioChunks, {type: 'audio/wav'});
+                recordedAudio.src = URL.createObjectURL(blob);
+                recordedAudio.controls = true;
+                recordedAudio.autoplay = true;
+                sendData(blob)
+            }
+        }
+    }
+
+    async function sendData(data) {
+        const formData = new FormData();
+        formData.append('audio-file', data);
+
+        $.post({
+            url: 'http://127.0.0.1:5000/audioUpload',
+            cache: false,
+            data: formData,
+            success: function (resp) {
+                console.log('sent!')
+            },
+            error: function (e) {
+                console.log('not sent! : ' + e.responseText)
+            }
+        });
+
+/*        const response = await fetch('http://127.0.0.1:5000/audioUpload', {
+            method: 'POST',
+            data: formData
+        })*/
+    }
+
+    record.onclick = e => {
+        console.log('I was clicked')
+        record.disabled = true;
+        record.style.backgroundColor = "blue"
+        stopRecord.disabled = false;
+        audioChunks = [];
+        rec.start();
+    }
+    stopRecord.onclick = e => {
+        console.log("I was clicked")
+        record.disabled = false;
+        stop.disabled = true;
+        record.style.backgroundColor = "red"
+        rec.stop();
+    }
+</script>
