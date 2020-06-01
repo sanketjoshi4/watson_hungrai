@@ -133,3 +133,61 @@ function initEvents() {
     });
 }
 
+navigator.mediaDevices.getUserMedia({audio: true})
+    .then(stream => {
+        handlerFunction(stream)
+    });
+
+
+function handlerFunction(stream) {
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => {
+        audioChunks.push(e.data);
+        if (rec.state == "inactive") {
+            let blob = new Blob(audioChunks, {type: 'audio/wav'});
+            recordedAudio.src = URL.createObjectURL(blob);
+            recordedAudio.controls = true;
+            recordedAudio.autoplay = true;
+            sendData(blob)
+        }
+    }
+}
+
+async function sendData(data) {
+
+    const formData = new FormData();
+    formData.append('audio-file', data);
+
+    $.post({
+        url: '/audioUpload',
+        data: formData,
+        cache: false,
+        processData: false,
+        contentType: false,
+        success: function (resp) {
+            addToChat(resp.msg);
+            chat(resp.msg);
+            console.log(resp.msg);
+        },
+        error: function (e) {
+            console.log('not sent! : ' + e.responseText)
+        }
+    });
+}
+
+record.onclick = e => {
+    console.log('I was clicked')
+    record.disabled = true;
+    record.style.backgroundColor = "blue"
+    stopRecord.disabled = false;
+    audioChunks = [];
+    rec.start();
+}
+
+stopRecord.onclick = e => {
+    console.log("I was clicked")
+    record.disabled = false;
+    stop.disabled = true;
+    record.style.backgroundColor = "red"
+    rec.stop();
+}

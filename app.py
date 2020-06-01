@@ -1,16 +1,18 @@
 import json, os, csv, glob
-from ibm_watson import AssistantV2
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.contrib.cache import SimpleCache
 
+from ibm_watson import AssistantV2
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+
+from ibm_watson import TextToSpeechV1
+from ibm_watson import SpeechToTextV1
+
 uploads_dir = './uploads/'
 resources_dir = './static/resources/'
 text_to_speech_file = 'text_to_speech'
-
-
-
+speech_to_text_file = 'speech_to_text'
 
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
@@ -25,9 +27,6 @@ assistant = AssistantV2(version=info['api_version'], authenticator=authenticator
 assistant.set_service_url(info['service_url'])
 assistant_id = info['assistant_id']
 info['session_id'] = assistant.create_session(assistant_id=assistant_id).get_result()['session_id']
-
-from ibm_watson import TextToSpeechV1
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 
 text_to_speech_credentials = {
     "apikey": "BLKaQ3nnYTTKruLeb9dL8gtbtxjI856Zx9WFKy0spZET",
@@ -53,6 +52,33 @@ def text_to_speech(msg, filename):
         )
         audio_file.close()
     return dialog_counter
+
+
+speech_to_text_credentials = {
+    "apikey": "UF2I5P9NXt1HXnmye2fkDeP2kxp_tb9VVSWF3i5qjuZ3",
+    "iam_apikey_description": "Auto-generated for key 16171d30-82c7-4b51-8f0e-fe656da5cdcd",
+    "iam_apikey_name": "wdp-writer",
+    "iam_role_crn": "crn:v1:bluemix:public:iam::::serviceRole:Writer",
+    "iam_serviceid_crn": "crn:v1:bluemix:public:iam-identity::a/eed7635af9de4ec1a02ed80b7edae9dc::serviceid:ServiceId-445f4b12-5e0d-45d4-a284-7f2a7138cf52",
+    "url": "https://api.us-east.speech-to-text.watson.cloud.ibm.com/instances/687866d5-4515-46ca-8789-9191fb6e41e3",
+}
+
+speech_to_text_authenticator = IAMAuthenticator(speech_to_text_credentials['apikey'])
+speech_to_text_service = SpeechToTextV1(authenticator=speech_to_text_authenticator)
+speech_to_text_service.set_service_url(speech_to_text_credentials['url'])
+
+
+def speech_to_text(file_name):
+    with open(file_name, "rb") as audio_file:
+        result = speech_to_text_service.recognize(
+            audio_file, content_type="audio/wav",
+            continuous=True, timestamps=False,
+            max_alternatives=1
+        )
+    try:
+        return result.result['results'][0]['alternatives'][0]['transcript']
+    except:
+        return None
 
 
 entity_items = []
@@ -131,6 +157,10 @@ class MyCache:
         MyCache.cache.set("dialog_counter", dialog_counter + 1)
         return dialog_counter
 
+    @staticmethod
+    def get_dialog_counter():
+        return MyCache.cache.get("dialog_counter")
+
 
 MyCache()
 
@@ -141,15 +171,33 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
+
 @app.route('/refresh', methods=['GET', 'POST'])
 def refresh():
+    info['session_id'] = assistant.create_session(assistant_id=assistant_id).get_result()['session_id']
     existing_wav = glob.glob('{}{}_*.wav'.format(resources_dir, text_to_speech_file))[0].replace('\\', '/')
     os.replace(existing_wav, '{}{}_0.wav'.format(resources_dir, text_to_speech_file))
     MyCache.cache.set("cart", {})
     MyCache.cache.set("context_item", None)
     MyCache.cache.set("context_intent", None)
     MyCache.cache.set("dialog_counter", 0)
+
+    for filename in glob.glob('{}{}_*.wav'.format(resources_dir, speech_to_text_file)):
+        os.remove(filename.replace('\\', '/'))
+
     return {}
+
+
+@app.route('/audioUpload', methods=['GET', 'POST'])
+def audioUpload():
+    dialog_counter = MyCache.get_dialog_counter()
+    # file_name = './static/resources/speech_to_text_{}.wav'.format(dialog_counter)
+    # request.files['audio-file'].save('./static/resources/speech_to_text_{}.wav'.format(dialog_counter))
+
+    file_name = './static/resources/recorded/{}.wav'.format(dialog_counter)
+    msg = speech_to_text(file_name)
+    return jsonify({"msg": msg})
+
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
@@ -182,10 +230,12 @@ def chat():
         output = bot_response.get_result()['output']
         context = bot_response.get_result()['context']
         handled = handle_output(output, context)
+
         if handled is not None and 'value' in handled:
             msg = handled['value']
             dialog_counter = text_to_speech(msg, 'text_to_speech')
             handled['dialog_counter'] = dialog_counter
+
         return jsonify(handled)
 
     except:
