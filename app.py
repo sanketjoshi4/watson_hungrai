@@ -193,7 +193,7 @@ def audioUpload():
     file_name = './static/resources/speech_to_text_{}.wav'.format(dialog_counter)
     request.files['audio-file'].save('./static/resources/speech_to_text_{}.wav'.format(dialog_counter))
 
-    file_name = './static/resources/recorded/{}.wav'.format(dialog_counter)
+    # file_name = './static/resources/recorded/{}.wav'.format(dialog_counter)
     msg = speech_to_text(file_name)
     return jsonify({"msg": msg})
 
