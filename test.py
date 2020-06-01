@@ -19,22 +19,24 @@ def text_to_speech(msg, num):
     with open('./static/resources/recorded/{}.wav'.format(num), 'wb') as audio_file:
         audio_file.write(
             text_to_speech_service.synthesize(
-                msg, voice='en-US_KevinV3Voice 	', accept='audio/wav'
+                msg, voice='en-US_KevinV3Voice', accept='audio/wav'
             ).get_result().content
         )
         audio_file.close()
 
 
 if __name__ == '__main__':
-    text_to_speech('John Doe', 0)
-    text_to_speech('What pizzas do you have?', 1)
-    text_to_speech('add two cheese pizzas, one fish taco, and a veggie salad', 2)
-    text_to_speech('what have i ordered?', 3)
-    text_to_speech('do you serve pork tacos?', 4)
-    text_to_speech('make it three', 5)
-    text_to_speech('i dont want the cheese pizzas', 6)
-    text_to_speech('what\'s in my cart?', 7)
-    text_to_speech('what veggies do you serve?', 8)
-    text_to_speech('add a veggie pizza and two veggie tacos please?', 9)
-    text_to_speech('that\'s all', 10)
-    text_to_speech('that\'s correct', 11)
+    full_text = 'John Doe. What pizzas do you have?. Add two cheese pizzas, one fish taco, and a veggie salad. What have i ordered?. Do you serve pork tacos? Make it three. I dont want the cheese pizzas. What\'s in my cart?. What veggies do you serve?. Add a veggie pizza and two veggie tacos please. That\'s all. That\'s correct.'
+    # text_to_speech('John Doe', 0)
+    # text_to_speech('What pizzas do you have?', 1)
+    # text_to_speech('add two cheese pizzas, one fish taco, and a veggie salad', 2)
+    # text_to_speech('what have i ordered?', 3)
+    # text_to_speech('do you serve pork tacos?', 4)
+    # text_to_speech('make it three', 5)
+    # text_to_speech('i dont want the cheese pizzas', 6)
+    # text_to_speech('what\'s in my cart?', 7)
+    # text_to_speech('what veggies do you serve?', 8)
+    # text_to_speech('add a veggie pizza and two veggie tacos please?', 9)
+    # text_to_speech('that\'s all', 10)
+    # text_to_speech('that\'s correct', 11)
+    text_to_speech(full_text, 666)
