@@ -1,0 +1,90 @@
+Could i have a veggie pasta?,cart_add
+Could you please add pork sandwich?,cart_add
+I would like to have veggie noodles,cart_add
+I want to have chicken hakka noodles,cart_add
+Can I have a chicken pizza please?,cart_add
+I want to add chicken grilled sandwich,cart_add
+I'd like to have thai pork noodles,cart_add
+One veggie grilled sandwich please,cart_add
+I'd like to have a chicken grilled sandwich,cart_add
+Can you please add a fish taco?,cart_add
+Ignore all that i said,cart_clear
+I want to start again,cart_clear
+Please clear my cart,cart_clear
+Scratch that,cart_clear
+Scratch all that,cart_clear
+Ignore what i said,cart_clear
+Take my order again,cart_clear
+I want to delete the chicken grilled sandwich,cart_delete
+Could i remove the chicken pizza?,cart_delete
+Can I delete the fish taco please?,cart_delete
+Can I remove the chicken sandwich please?,cart_delete
+Can you please delete the veggie salad?,cart_delete
+Can you please remove the pork salad?,cart_delete
+Could i delete the chicken pizza?,cart_delete
+Could you please delete the pork sandwich?,cart_delete
+Could you please remove veggie pasta?,cart_delete
+Delete chicken salad?,cart_delete
+I don't want to have the veggie grilled sandwich,cart_delete
+I would like to delete veggie noodles,cart_delete
+I want to remove the chicken pizza,cart_delete
+I would like to remove chicken noodles,cart_delete
+I'd like to delete the chicken hakka noodles,cart_delete
+I'd like to remove thai veggie noodles,cart_delete
+Remove the chicken sandwich,cart_delete
+Could you please list my order?,cart_list
+Could you list my cart?,cart_list
+What have I ordered?,cart_list
+Please list my order,cart_list
+What's in my order?,cart_list
+What's in my cart?,cart_list
+Could you list my order?,cart_list
+Please list my cart,cart_list
+Could you please list my items?,cart_list
+Could you please list my cart?,cart_list
+please repeat my order,cart_list
+could you summarize my order?,cart_list
+please remind me what my order is,cart_list
+remind me what my order is,cart_list
+Have i ordered chicken tacos?,cart_list
+What have I added?,cart_list
+Could you list my items?,cart_list
+I want to finalize,checkout
+Finalize the order,checkout
+Finalize,checkout
+Please checkout,checkout
+Checkout,checkout
+That is all i want,checkout
+That's all I want,checkout
+Thanks,checkout
+Thank you,checkout
+That is all,checkout
+That's all,checkout
+I want to finalize the order,checkout
+I want to checkout,checkout
+What do you have in,item_list
+Do you serve chicken tacos?,item_list
+How about some to go with it?,item_list
+Is available,item_list
+Do you prepare,item_list
+Do you serve,item_list
+Do you have,item_list
+Could you recommend something in,item_list
+Could you recommend,item_list
+What's available in,item_list
+Hello! I'm Tim,name
+Hello! My name is Jane,name
+Hey there! I'm Jack,name
+Hey there! My name is Jim,name
+I'm Tom,name
+John,name
+My name is Mary,name
+My name is Sanket,name
+Elizabeth,name
+"I am in the mood for some beef, that is spicy and filling",recommend
+Could you suggest me some light vegan food?,recommend
+I'll prefer to have something healthy and light,recommend
+Could you recommend something that is healthy and sweet?,recommend
+I am craving for something filling and crunchy,recommend
+"I am craving for something light, sweet and Italian",recommend
+I'm in the mood for some Spicy and filling Indian food,recommend

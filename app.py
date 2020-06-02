@@ -1,4 +1,5 @@
 import json, os, csv, glob
+import hungrai_utils as hutils
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.contrib.cache import SimpleCache
@@ -13,6 +14,8 @@ uploads_dir = './uploads/'
 resources_dir = './static/resources/'
 text_to_speech_file = 'text_to_speech'
 speech_to_text_file = 'speech_to_text'
+
+etl_data = hutils.etl()
 
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
@@ -79,20 +82,6 @@ def speech_to_text(file_name):
         return result.result['results'][0]['alternatives'][0]['transcript']
     except:
         return None
-
-
-entity_items = []
-with open('data/entity_items.csv') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=',')
-    for row in spamreader:
-        entity_items.append(row)
-
-ingr_item_dict = {}
-for i, v in enumerate(entity_items):
-    for ingr in v[1].split(' '):
-        if ingr not in ingr_item_dict:
-            ingr_item_dict[ingr] = []
-        ingr_item_dict[ingr].append(v[1])
 
 
 class MyCache:
@@ -340,7 +329,7 @@ def handle_output(output, context):
         candidate_items = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Item']
         if candidate_items is not None and len(candidate_items) > 0 and candidate_items[0] is not None:
             item = candidate_items[0]['value']
-            if item in [i[1] for i in entity_items]:
+            if item in etl_data['lookup']['item']:
                 MyCache.set_context_item(item)
                 MyCache.set_context_intent("cart_add")
                 return {
@@ -348,19 +337,17 @@ def handle_output(output, context):
                     "value": "Yes, we do have {}. Should I add that?".format(item)
                 }
 
-            # return {
-            #     "type": "generic",
-            #     "value": "I'm sorry, but we do not have {}".format(item)
-            # }
-
         candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Ingredient']
         if candidates is not None and len(candidates) > 0 and candidates[0] is not None:
             ingredient = candidates[0]['value']
-            if ingredient in ingr_item_dict:
-                items = natural_list(ingr_item_dict[ingredient], countless=True, already_list=True, shorten=True)
+            if ingredient in etl_data['lookup']['tag']:
+                tag_id = etl_data['lookup']['tag'][ingredient]
+                item_ids = etl_data['mapping']['tag_item'][tag_id]
+                items = [etl_data['master']['item'][item_id] for item_id in item_ids]
+                items_spoken = natural_list(items, countless=True, already_list=True, shorten=True)
                 return {
                     "type": "generic",
-                    "value": "Within {}, we have {}. What would you like?".format(ingredient, items)
+                    "value": "Within {}, we have {}. What would you like?".format(ingredient, items_spoken)
                 }
             return {"type": "generic", "value": "I'm sorry, but we have nothing within {}".format(ingredient)}
 
@@ -417,6 +404,27 @@ def handle_output(output, context):
         return {
             "type": "generic",
             "value": "Alright then. Please let me know what you want to change in your order"
+        }
+
+    if intent == 'recommend':
+
+        candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Ingredient']
+        if candidates is not None and len(candidates) > 0:
+            candidate_tag_ids = [etl_data['lookup']['tag'][c['value']] for c in candidates]
+            candidate_items = []
+            for item_id, tag_ids in etl_data['mapping']['item_tag'].items():
+                if set(candidate_tag_ids).issubset(set(tag_ids)):
+                    candidate_items.append(etl_data['master']['item'][item_id])
+
+            items_spoken = natural_list(candidate_items, countless=True, already_list=True, shorten=True)
+            return {
+                "type": "generic",
+                "value": "We have just the thing for you - {}. What would you like?".format(items_spoken)
+            }
+
+        return {
+            "type": "generic",
+            "value": "Apologies, I do not understand what type of food you are looking for. Could you please rephrase?"
         }
 
     return {"type": "generic", "value": output['generic'][0]['text']}

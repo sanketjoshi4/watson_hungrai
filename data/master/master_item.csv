@@ -1,0 +1,111 @@
+id,name,,,,,,,,,,,,
+1,chicken hunan noodles,13,12,34,44,,,4,,,,,49
+2,thai chicken noodles,3,13,12,34,44,,4,,,,,49
+3,vegetable noodles,7,9,11,50,,,4,,,,,49
+4,chicken alfredo pasta,2,13,12,27,34,,,14,15,,,49
+5,chicken pesto pasta,2,13,12,27,34,,,,15,,,49
+6,chicken marinara pasta,2,13,12,27,34,,,,15,,,49
+7,vegan alfredo pasta,2,7,9,11,27,34,50,14,,,,49
+8,pesto pasta,2,7,9,27,34,,,,15,,,49
+9,marinara pasta,2,7,9,27,34,,,,15,,,49
+10,double cheese pizza,2,26,9,,,,,14,15,31,,49
+11,vegan pizza,2,7,9,11,26,50,,14,,31,,49
+12,pepperoni pizza,2,12,26,,18,,,14,,31,,49
+13,chicken pizza,2,13,26,12,,,,14,,31,,49
+14,beef pizza,2,12,26,,,,,14,,31,,49
+15,meat lovers pizza,2,13,26,12,18,,,14,,31,,49
+16,chicken salad,32,12,11,50,,,,,,,,
+17,egg salad,32,9,11,50,,,,,15,,,
+18,fruit salad,32,7,11,9,45,50,,,,,,
+19,tomato mozarella sandwich,21,9,11,12,50,,,14,,,,
+20,grilled chicken sandwich,21,13,12,40,,,,14,,,,
+21,french fries,7,9,39,,,,,,,,,
+22,cheeseburger,22,12,14,,18,,,14,,,,49
+23,fried fish burger,10,22,20,12,,,,14,,,,49
+24,vegan burger,11,22,7,9,50,50,,14,,,,49
+25,bacon burger,22,12,,,14,,,14,,,,49
+26,chicken taco,30,13,12,6,39,,,,,,,
+27,pork taco,30,6,12,16,17,39,,,,,,
+28,fish taco,30,20,10,6,12,39,,,,,,
+29,shrimp taco,30,19,10,6,12,39,,,,,,
+30,nachos,29,6,12,39,,,,,,,,
+31,nachos with cheese,29,9,6,39,,,,14,,,,49
+32,chicken nachos,29,13,6,12,,,39,,,,,
+33,chicken nachos with cheese,29,13,6,12,,,39,14,,,,49
+34,beef nachos,29,6,12,,18,,39,,,,,
+35,beef nachos with cheese,29,6,12,,18,,39,14,,,,49
+36,chicken fried rice,28,13,12,,,6,4,,15,,,49
+37,shrimp fried rice,28,19,10,12,,6,4,,15,,,49
+38,egg fried rice,9,28,,,,6,4,,15,,,49
+39,beef fried rice,28,12,,,18,6,4,,15,,,49
+40,naan bread,5,24,9,,,,,,,31,,49
+41,garlic naan bread,5,24,9,,,,,,,31,,49
+42,butter chicken,5,13,12,23,,44,,,,,,49
+43,chicken tikka masala,5,13,12,23,,44,,,,,,49
+44,chicken tandoori masala,5,13,12,23,,44,,,,,,49
+45,mutton masala,5,12,23,,,44,,,,,,49
+46,paneer butter masala,5,9,23,,,44,,14,,,,49
+47,chicken wonton noodles,34,13,12,34,,44,,,,,,49
+48,mixed seafood soup,10,12,,,,4,,,15,,,
+49,creamy chicken soup,12,13,,,,,,,15,,,
+50,crab soup,10,12,,,,,,,15,,,
+51,pork rice,28,16,12,17,,,,,15,,,49
+52,chicken spaghetti,34,13,12,34,,,,14,,,,49
+53,all meat platter,16,13,17,12,18,,,,,,,49
+54,teriyaki tofu,33,,,,,4,,,,,,
+55,seafood platter,10,12,,,,4,,,,,,49
+56,chicken fajitas,13,6,12,,,44,,,,,,49
+57,tortellini,2,27,9,34,,,,14,,,,49
+58,pesto gnocchi,2,27,9,34,,,,14,15,,,49
+59,pasta carbonera,2,27,16,17,12,34,,14,15,,,49
+60,chili,12,,,18,,44,,14,,,,49
+61,pork buns,16,12,17,,,,,,,31,,49
+62,vegetarian chili,9,,,,,44,,14,,,,49
+63,glazed salmon,12,20,10,45,,,,,,,,49
+64,veggie burger,9,,,,,,,14,,,,49
+65,black bean burger,9,7,,,,,,14,,,,49
+66,fried chicken,12,13,39,,,,,,,,,49
+67,macaroni and cheese,9,34,,,,,,14,,,,49
+68,thai peanut tofu,33,3,4,45,44,,,,,,,
+69,lobster bisque,10,12,,,,,,,,,,
+70,broccoli cheddar soup,9,,,,,,,14,,,,
+71,beef tacos,30,6,12,18,39,,,14,,,,49
+72,pork dumplings,16,16,12,17,,,,,,,,49
+73,pork ramen noodles,34,16,16,12,34,17,44,,15,,,49
+74,spaghetti and meatballs,2,34,12,,,,,14,,,,49
+75,teriyaki brussel sprouts,7,9,11,50,,4,44,,,,,
+76,sweet potato fries,7,9,11,39,50,,,,,,,
+77,paneer tikka masala,9,23,5,23,,,44,14,,,,49
+78,boston creme pie,9,15,38,46,45,,,,,31,,
+79,chocolate chip cookie,9,42,39,46,45,,,,15,31,,
+80,snickerdoodle cookie,9,15,39,46,45,,,,15,31,,
+81,key lime pie,9,15,38,46,45,,,,,31,48,
+82,carrot cake,9,15,,46,45,,,,15,31,,
+83,funnel cake,9,15,,46,45,,,,15,31,,
+84,banana pudding,9,42,43,46,45,,,,,,,
+85,cheesecake,9,15,,46,45,,,,15,31,,
+86,cherry pie,9,15,43,38,45,46,,,15,31,,
+87,ice cream sundae,9,42,,45,46,,,,,,,
+88,german chocolate cake,9,42,,45,46,,,,15,31,,
+89,frozen yogurt,9,,,45,46,,,,,,,
+90,tiramisu,9,42,2,45,46,,,,,,,
+91,banana split,9,43,,45,46,,,,,,,
+92,french silk pie,9,42,38,45,46,,,,15,,,
+93,apple pie,9,43,38,45,46,,,,15,31,,
+94,pumpkin pie,9,38,,45,46,,,,15,31,,
+95,chocolate ice cream,9,42,,45,46,,,,,,,
+96,chocolate mousse,9,42,15,45,46,,,,15,,,
+97,chicken marsala,1,13,13,12,,,,,15,,,49
+98,beef lasagna,1,18,12,14,,,,,15,31,,49
+99,california roll,10,28,12,,,,,,,,,
+100,pepsi,7,9,35,45,,,,,,,,
+101,sprite,7,9,35,45,,,,,,,,
+102,dr. pepper,7,9,35,45,,,,,,,,
+103,coke,7,9,35,45,,,,,,,,
+104,diet coke,7,9,35,45,,,,,,,,
+105,coke zero,7,9,35,45,,,,,,,,
+106,red bull,7,9,35,45,,,,,,,,
+107,waffles,39,9,45,,,,,,15,,,
+108,pancakes,,9,45,,,,,,,,,
+109,oatmeal,7,9,50,,,,,,,,,
+110,corn flake cereal,7,9,39,50,,,,,,,,
