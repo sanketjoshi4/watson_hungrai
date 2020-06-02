@@ -397,7 +397,7 @@ def handle_output(output, context):
                 pass
             return {
                 "type": "end",
-                "value": "I am placing your order{}. Thank you for using HungerAI, and we'd be glad to have you back!".format(
+                "value": "I am placing your order. Thank you for using Hunger A.I., and we'd be glad to have you back!".format(
                     '!' if name is None else (' ' + name))
             }
 
@@ -417,10 +417,21 @@ def handle_output(output, context):
                     candidate_items.append(etl_data['master']['item'][item_id])
 
             items_spoken = natural_list(candidate_items, countless=True, already_list=True, shorten=True)
+
+            if len(candidate_items) == 1:
+
+                MyCache.set_context_item(candidate_items[0])
+                MyCache.set_context_intent('cart_add')
+                return {
+                    "type": "generic",
+                    "value": "We have just the thing for you. {}. Like it?".format(items_spoken)
+                }
+
             return {
                 "type": "generic",
-                "value": "We have just the thing for you - {}. What would you like?".format(items_spoken)
+                "value": "I have a couple of suggestions for you. {}. Anything to your liking?".format(items_spoken)
             }
+
 
         return {
             "type": "generic",

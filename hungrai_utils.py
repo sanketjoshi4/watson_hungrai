@@ -16,12 +16,17 @@ text_to_speech_authenticator = IAMAuthenticator(text_to_speech_credentials['apik
 text_to_speech_service = TextToSpeechV1(authenticator=text_to_speech_authenticator)
 text_to_speech_service.set_service_url(text_to_speech_credentials['url'])
 
+voice_0 = 'en-US_AllisonV3Voice'
+voice_1 = 'en-US_KevinV3Voice'
+voice_2 = 'en-US_LisaV3Voice'
 
-def text_to_speech(msg, num):
+
+def text_to_speech(msg, num, voice=voice_0):
+    print('tts_' + str(num))
     with open('./static/resources/recorded/{}.wav'.format(num), 'wb') as audio_file:
         audio_file.write(
             text_to_speech_service.synthesize(
-                msg, voice='en-US_KevinV3Voice', accept='audio/wav'
+                msg, voice=voice, accept='audio/wav'
             ).get_result().content
         )
         audio_file.close()
@@ -99,38 +104,44 @@ def etl(update=False):
 
 def prep_recording():
     transcript = [
-        "Hi! I'm Edward",
-        "I'm in the mood for some spicy indian curry",
-        "I'd like chicken tikka masala and two mutton masalas",
-        "please suggest some indian bread to go with it",
-        "I'd like a garlic naan bread and two naan breads. Also add a paneer butter masala",
-        "do you serve any pastas?",
-        "Could i have  a chicken alfredo pasta please?",
-        "and please remove the naan breads",
-        "please remind me what my order is again",
-        "you know what? scratch that",
-        "I'll prefer to have something that's healthy and light instead",
-        "do you have fruit salad?",
-        "make it four",
-        "That's all that i want",
-        "roger that"
+        "Hello there! I'm Jonathan",
+        "I'm craving for something with chicken, beef, and pork!",
+        "Why not?",
+        "I'm in the mood for something spicy! An indian curry probably?",
+        "I'd like a chicken tikka masala and three diet cokes please",
+        "Could you remove the all meat platter please?",
+        "Please repeat my order",
+        "You know what? Scratch that",
+        "What pizza do you have?",
+        "Do you serve meat lovers pizza by chance?",
+        "Nevermind",
+        "Could you recommend something that is both sweet and tangy?",
+        "make it three",
+        "That's all that I want",
+        "That is correct"
     ]
+    [text_to_speech(v, i) for i, v in enumerate(transcript)]
 
+    text_to_speech('. '.join(transcript), 99, voice=voice_1)
+
+
+def demo_transcript():
+    transcript = [
+        "We are Team 11, and we present to you Hunger A.I., the one stop shop for lazy, hungry people! Did you know that the average american spends upwards of a hundred hours annually, deciding what to eat?, Double that if its a group, or a couple.",
+        "Most of us have some idea of what we want, but the last step, the decision itself, is something we hesitate to make. This is where Hunger A.I. comes in.",
+        "With our voice assisted food recommendation system, we help users decide what they want, by taking general clues from them. Say goodbye to browsing gigantic menu cards, and to typing! Just speak up your mind, and order away!",
+        "If you know what you want, no harm! Search by food, ingredients, cuisines, dietary requirements, and, more. Edit your cart with ease and finalize your order with the click of a button. Wait, you don't even need to do that, because we listen to you!",
+        "All this for only nine ninety nine a month, or five ninety nine a month for an annual plan. Restaurants can use it for a 5% commission and free users can use it for 3% commission. We plan to constantly update our databases with information from restaurants and intents and suggestions from users.",
+        "In the long term, we plan to expand to the e-commerce sector, where large swaths of labelled data resides. The bigger the data, the better our recommendation system. We plan to expand the supported languages beyond english as well as add accessibilities for people with special needs with better a voice support.",
+        "Now, to get technical, our system is powered by an h.t.m.l. c.s.s. javascript front end chat application supported on web application or mobile web, and a python flask server over a my sequel database. ",
+        "The app receives audio from the client, converts it to text using watson's speech to text a.p.i, and forwards that to watson assistant. With over a dozen intents, hundreds of entities, all linked to the database with en ETL process, the assistant supports features like item recommendation based on tags, fuzzy item search, and more.",
+        "The flask cache is used to temporarily store the user order till checkout. Watson assistant also recognizes commands to add, remove, update and reset the cart. Conditional replies are then forwarded to watson's text to speech a.p.i, which then sends the audio to the client app. Let's proceed to the demo."
+    ]
+    [text_to_speech(v, i + 200, voice=voice_1) for i, v in enumerate(transcript)]
 
 
 if __name__ == '__main__':
-    etl()
-    # full_text = 'James. What pizzas do you have?. Add two cheese pizzas, one fish taco, and a veggie salad. What have i ordered?. Do you serve pork tacos? Make it three. I dont want the cheese pizzas. What\'s in my cart?. What veggies do you serve?. Add a veggie pizza and two veggie tacos please. That\'s all. That\'s correct.'
-    # text_to_speech(full_text, 666)
-    # text_to_speech('James', 0)
-    # text_to_speech('What pizzas do you have?', 1)
-    # text_to_speech('add two cheese pizzas, one fish taco, and a veggie salad', 2)
-    # text_to_speech('what have i ordered?', 3)
-    # text_to_speech('do you serve pork tacos?', 4)
-    # text_to_speech('make it three', 5)
-    # text_to_speech('i dont want the cheese pizzas', 6)
-    # text_to_speech('what\'s in my cart?', 7)
-    # text_to_speech('what veggies do you serve?', 8)
-    # text_to_speech('add a veggie pizza and two veggie tacos please?', 9)
-    # text_to_speech('that\'s all', 10)
-    # text_to_speech('that\'s correct', 11)
+    # demo_transcript()
+    prep_recording()
+    # text_to_speech('Please repeat my order.         ________                     hello', 102, voice=voice_1)
+    # etl()

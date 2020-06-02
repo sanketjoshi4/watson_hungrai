@@ -14,7 +14,7 @@ $(document).ready(function () {
             refresh: '/refresh'
         },
         msgs: {
-            greet: "Hello! Are you hungry? Look no further, I'm HungerAI, your personal food assistant! Can I have your name, please?",
+            greet: 'Hello there! Are you hungry? I\'ve got you covered! I\'m Hunger A.I., your personal food assistant! Can I have your name please?',
             error: "I'm sorry, I did not get that. Could you please try again?"
         },
         status: {
@@ -58,6 +58,10 @@ function chat(msg) {
             } else if (resp.type === 'end') {
 
                 addToChat(resp.value, true);
+                setTimeout(function () {
+                    new Audio('/static/resources/text_to_speech_' + (parseInt(resp.dialog_counter) + 1) + '.wav').play();
+                }, config.text_to_speech_delay);
+
                 config.status.end = true;
                 $('.type_msg').hide();
                 $('.' + config.elems.refreshBarClass).show();
@@ -115,6 +119,11 @@ function addToChat(msg, incoming) {
 
 function initEvents() {
 
+    $('.' + config.elems.msgHistoryClass).click();
+    setTimeout(function () {
+        new Audio('/static/resources/recorded/999.wav').play();
+    }, 2000);
+
     var chatWindow = $('.' + config.elems.chatWindowClass);
     chatWindow.keypress(function (event) {
         if (event.which === 13) {
@@ -125,15 +134,15 @@ function initEvents() {
         }
     });
 
-/*
-    var sendButton = $('.' + config.elems.sendButtonClass);
-    sendButton.click(function () {
-        var msg = chatWindow.val();
-        chatWindow.val('');
-        addToChat(msg);
-        chat(msg);
-    });
-*/
+    /*
+        var sendButton = $('.' + config.elems.sendButtonClass);
+        sendButton.click(function () {
+            var msg = chatWindow.val();
+            chatWindow.val('');
+            addToChat(msg);
+            chat(msg);
+        });
+    */
 }
 
 navigator.mediaDevices.getUserMedia({audio: true})
