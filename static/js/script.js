@@ -133,16 +133,6 @@ function initEvents() {
             chat(msg);
         }
     });
-
-    /*
-        var sendButton = $('.' + config.elems.sendButtonClass);
-        sendButton.click(function () {
-            var msg = chatWindow.val();
-            chatWindow.val('');
-            addToChat(msg);
-            chat(msg);
-        });
-    */
 }
 
 navigator.mediaDevices.getUserMedia({audio: true})

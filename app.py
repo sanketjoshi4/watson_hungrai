@@ -1,5 +1,4 @@
 import json, os, csv, glob
-import hungrai_utils as hutils
 
 from flask import Flask, render_template, request, jsonify
 from werkzeug.contrib.cache import SimpleCache
@@ -10,12 +9,94 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import TextToSpeechV1
 from ibm_watson import SpeechToTextV1
 
+etl_update = False
+
 uploads_dir = './uploads/'
 resources_dir = './static/resources/'
 text_to_speech_file = 'text_to_speech'
 speech_to_text_file = 'speech_to_text'
 
-etl_data = hutils.etl()
+
+# This converts master data to watson readable entities for ingestion, as well as data structures for further code
+def etl(update=False):
+    tag_map = {}
+    tag_lookup = {}
+
+    # Read master tag file
+    with open('data/master/master_tag.csv') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        header_parsed = False
+        for row in spamreader:
+            if not header_parsed:
+                header_parsed = True
+                continue
+            id = int(row[0])
+            name = row[1]
+            if name is not '':
+                tag_map[id] = name
+                tag_lookup[name] = id
+
+    item_map = {}
+    item_lookup = {}
+    tag_item_map = {}
+    item_tag_map = {}
+
+    # read master item file
+    with open('data/master/master_item.csv') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        header_parsed = False
+        for row in spamreader:
+            if not header_parsed:
+                header_parsed = True
+                continue
+
+            item_id = int(row[0])
+            item_name = row[1]
+            item_map[item_id] = item_name
+            item_lookup[item_name] = item_id
+
+            candidate_tags = [int(i) for i in row[2:] if str(i) is not '']
+            candidate_tags.sort()
+            item_tag_map[item_id] = candidate_tags
+
+            for tag_id in candidate_tags:
+                if tag_id not in tag_item_map:
+                    tag_item_map[tag_id] = []
+                tag_item_map[tag_id].append(int(row[0]))
+
+    # Update watson entity ingestion csv's
+    if update:
+        with open('data/entities/entity_items.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            for item_id, item_name in item_map.items():
+                spamwriter.writerow(['Item', item_name])
+
+        with open('data/entities/entity_ingredients.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            for tag_id, tag_name in tag_map.items():
+                spamwriter.writerow(['Ingredient', tag_name])
+
+    return {
+        'master': {
+            'tag': tag_map,
+            'item': item_map
+        },
+        'lookup': {
+            'tag': tag_lookup,
+            'item': item_lookup
+        },
+        'mapping': {
+            'tag_item': tag_item_map,
+            'item_tag': item_tag_map
+        }
+    }
+
+
+# Get etl data
+
+etl_data = etl(update=etl_update)
+
+# Initialize Watson Assistant Service
 
 info = {
     'iam_auth': 'Wx-EWLZ954sS2vz0Tb9x2YZldRNX3E-uKqa4wNTrSlIa',
@@ -30,6 +111,8 @@ assistant = AssistantV2(version=info['api_version'], authenticator=authenticator
 assistant.set_service_url(info['service_url'])
 assistant_id = info['assistant_id']
 info['session_id'] = assistant.create_session(assistant_id=assistant_id).get_result()['session_id']
+
+# Initialize Watson Text to Speech Service
 
 text_to_speech_credentials = {
     "apikey": "BLKaQ3nnYTTKruLeb9dL8gtbtxjI856Zx9WFKy0spZET",
@@ -57,6 +140,8 @@ def text_to_speech(msg, filename):
     return dialog_counter
 
 
+# Initialize Watson Speech to Text Service
+
 speech_to_text_credentials = {
     "apikey": "UF2I5P9NXt1HXnmye2fkDeP2kxp_tb9VVSWF3i5qjuZ3",
     "iam_apikey_description": "Auto-generated for key 16171d30-82c7-4b51-8f0e-fe656da5cdcd",
@@ -83,6 +168,8 @@ def speech_to_text(file_name):
     except:
         return None
 
+
+# Initialize simple cache for cart, and context like item, intent and dialog
 
 class MyCache:
 
@@ -151,16 +238,20 @@ class MyCache:
         return MyCache.cache.get("dialog_counter")
 
 
+# Init cache
 MyCache()
 
+# Initialize Flask Application
 app = Flask(__name__)
 
 
+# Serve webpage
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
+# Clear cache and temporary files when refreshed
 @app.route('/refresh', methods=['GET', 'POST'])
 def refresh():
     info['session_id'] = assistant.create_session(assistant_id=assistant_id).get_result()['session_id']
@@ -177,17 +268,19 @@ def refresh():
     return {}
 
 
+# For uploading recorded speech from client to server
 @app.route('/audioUpload', methods=['GET', 'POST'])
 def audioUpload():
     dialog_counter = MyCache.get_dialog_counter()
-    # file_name = './static/resources/speech_to_text_{}.wav'.format(dialog_counter)
-    # request.files['audio-file'].save('./static/resources/speech_to_text_{}.wav'.format(dialog_counter))
+    file_name = './static/resources/speech_to_text_{}.wav'.format(dialog_counter)
+    request.files['audio-file'].save('./static/resources/speech_to_text_{}.wav'.format(dialog_counter))
 
-    file_name = './static/resources/recorded/{}.wav'.format(dialog_counter)
+    # file_name = './static/resources/recorded/{}.wav'.format(dialog_counter)
     msg = speech_to_text(file_name)
     return jsonify({"msg": msg})
 
 
+# For receiving chat text from client to server
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     data = json.loads(request.data)
@@ -231,7 +324,7 @@ def chat():
         return None
 
 
-# prevent cached responses
+# Prevent cached responses so that latest generated audio files are fetched as the dialog proceeds
 @app.after_request
 def add_header(r):
     """
@@ -245,15 +338,16 @@ def add_header(r):
     return r
 
 
+# Handle operations for various intents
 def handle_output(output, context):
-    # try:
-
     intent = output['intents'][0]['intent'] if len(output['intents']) > 0 else None
     context_intent = MyCache.get_context_intent()
 
+    # Set contextual intent
     if context_intent is not None or intent is None:
         intent = context_intent
 
+    # List items from cart
     if intent == "cart_list":
 
         cart_list = MyCache.cart_list()
@@ -262,11 +356,13 @@ def handle_output(output, context):
 
         return {"type": "generic", "value": "You have ordered {}".format(natural_list(cart_list))}
 
+    # Add items to cart
     if intent == 'cart_add':
 
         order = decipher_order(output)
         context_item = MyCache.get_context_item()
 
+        # Item in content, count specified
         if context_item is not None and len(order) == 0:
 
             denied = any([v['entity'] == 'Boolean' and v['value'] == 'no' for i, v in enumerate(output['entities'])])
@@ -279,11 +375,13 @@ def handle_output(output, context):
                     "value": "As you wish. What else would you like?"
                 }
 
+            # Fetch count
             count = 1
             for i, v in enumerate(output['entities']):
                 if v['entity'] == 'sys-number':
                     count = int(v['value'])
 
+            # Success
             if MyCache.cart_add(context_item, count):
                 MyCache.set_context_intent(None)
                 MyCache.set_context_item(None)
@@ -292,6 +390,7 @@ def handle_output(output, context):
                     "value": "Alright... I've added {} to your cart!".format(natural_list({context_item: count}))
                 }
 
+            # Failure
             MyCache.set_context_intent(None)
             MyCache.set_context_item(None)
             return {
@@ -299,6 +398,7 @@ def handle_output(output, context):
                 "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
             }
 
+        # Successful add
         if all(MyCache.cart_add(item, count) for item, count in order.items()):
             return {"type": "generic", "value": "Alright... I've added {} to your cart!".format(natural_list(order))}
 
@@ -307,25 +407,32 @@ def handle_output(output, context):
             "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
         }
 
+    # Remove items from cart
     if intent == 'cart_delete':
 
         order = decipher_order(output)
+
+        # Item not in cart
         if len(order) == 0:
             return {"type": "generic", "value": "But haven't ordered {}".format(natural_list(order, countless=True))}
 
+        # Success
         if all(MyCache.cart_delete(item) for item, count in order.items()):
             return {
                 "type": "generic",
                 "value": "I've removed {} from your cart!".format(natural_list(order, countless=True))
             }
 
+        # Error
         return {
             "type": "generic",
             "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
         }
 
+    # List items from menu
     if intent == 'item_list':
 
+        # Search by item
         candidate_items = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Item']
         if candidate_items is not None and len(candidate_items) > 0 and candidate_items[0] is not None:
             item = candidate_items[0]['value']
@@ -337,6 +444,7 @@ def handle_output(output, context):
                     "value": "Yes, we do have {}. Should I add that?".format(item)
                 }
 
+        # Search by ingredient
         candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Ingredient']
         if candidates is not None and len(candidates) > 0 and candidates[0] is not None:
             ingredient = candidates[0]['value']
@@ -356,6 +464,8 @@ def handle_output(output, context):
             "value": "Apologies, I do not understand what item you're referring to. Could you please repeat?"
         }
 
+    # Clear cart
+
     if intent == 'cart_clear':
 
         if MyCache.cart_clear():
@@ -368,6 +478,8 @@ def handle_output(output, context):
             "type": "generic",
             "value": "Apologies, I do not understand. Could you please repeat?"
         }
+
+    # Confirm order
 
     if intent == 'checkout':
 
@@ -383,6 +495,8 @@ def handle_output(output, context):
             "type": "generic",
             "value": "You have ordered {}. Please confirm".format(natural_list(cart))
         }
+
+    # Contextual confirmation
 
     if intent == 'checkout_confirmation':
 
@@ -406,8 +520,10 @@ def handle_output(output, context):
             "value": "Alright then. Please let me know what you want to change in your order"
         }
 
+    # Item recommendation mode
     if intent == 'recommend':
 
+        # Search my tags
         candidates = [v for i, v in enumerate(output['entities']) if v['entity'] == 'Ingredient']
         if candidates is not None and len(candidates) > 0:
             candidate_tag_ids = [etl_data['lookup']['tag'][c['value']] for c in candidates]
@@ -418,8 +534,8 @@ def handle_output(output, context):
 
             items_spoken = natural_list(candidate_items, countless=True, already_list=True, shorten=True)
 
+            # Single match then get confirmation
             if len(candidate_items) == 1:
-
                 MyCache.set_context_item(candidate_items[0])
                 MyCache.set_context_intent('cart_add')
                 return {
@@ -427,24 +543,23 @@ def handle_output(output, context):
                     "value": "We have just the thing for you. {}. Like it?".format(items_spoken)
                 }
 
+            # Multi match then list
             return {
                 "type": "generic",
                 "value": "I have a couple of suggestions for you. {}. Anything to your liking?".format(items_spoken)
             }
 
-
+        # No matching recommendation
         return {
             "type": "generic",
             "value": "Apologies, I do not understand what type of food you are looking for. Could you please rephrase?"
         }
 
+    # Default watson assistant action
     return {"type": "generic", "value": output['generic'][0]['text']}
 
-    # except:
 
-    # return {"type": "generic", "value": output['generic'][0]['text']}
-
-
+# This takes ordered occurrences of entities and numbers, and converts to entities with counts
 def decipher_order(output):
     result = {}
     temp_num = 1
@@ -457,6 +572,7 @@ def decipher_order(output):
     return result
 
 
+# This takes in a list or dictionary of numbered entities and outputs natural language list
 def natural_list(items, countless=False, already_list=False, shorten=False):
     content = ''
     distinct_count = len(items)
@@ -467,6 +583,7 @@ def natural_list(items, countless=False, already_list=False, shorten=False):
 
     for item, count in items.items():
 
+        # If not all items need to be listed
         if shorten and distinct_counter == 4:
             content += ' and {} more items.'.format(distinct_count - distinct_counter)
             break
@@ -475,6 +592,7 @@ def natural_list(items, countless=False, already_list=False, shorten=False):
         if 1 < distinct_count == distinct_counter:
             content += ' and'
 
+        # If count of items irrelevant
         if countless:
             content += ' {},'.format(item)
         elif count == 1:
@@ -485,5 +603,9 @@ def natural_list(items, countless=False, already_list=False, shorten=False):
     return content[:-1]
 
 
+# Start the application
 if __name__ == "__main__":
-    app.run(debug=True)
+    if etl_update:
+        etl(update=True)
+    else:
+        app.run(debug=True)

@@ -1,8 +1,6 @@
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import TextToSpeechV1
 
-import csv
-
 text_to_speech_credentials = {
     "apikey": "BLKaQ3nnYTTKruLeb9dL8gtbtxjI856Zx9WFKy0spZET",
     "iam_apikey_description": "Auto-generated for key ed5fac4a-bc22-4d9f-9859-2b248804035e",
@@ -30,76 +28,6 @@ def text_to_speech(msg, num, voice=voice_0):
             ).get_result().content
         )
         audio_file.close()
-
-
-def etl(update=False):
-    tag_map = {}
-    tag_lookup = {}
-    with open('data/master/master_tag.csv') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',')
-        header_parsed = False
-        for row in spamreader:
-            if not header_parsed:
-                header_parsed = True
-                continue
-            id = int(row[0])
-            name = row[1]
-            if name is not '':
-                tag_map[id] = name
-                tag_lookup[name] = id
-
-    item_map = {}
-    item_lookup = {}
-    tag_item_map = {}
-    item_tag_map = {}
-
-    with open('data/master/master_item.csv') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=',')
-        header_parsed = False
-        for row in spamreader:
-            if not header_parsed:
-                header_parsed = True
-                continue
-
-            item_id = int(row[0])
-            item_name = row[1]
-            item_map[item_id] = item_name
-            item_lookup[item_name] = item_id
-
-            candidate_tags = [int(i) for i in row[2:] if str(i) is not '']
-            candidate_tags.sort()
-            item_tag_map[item_id] = candidate_tags
-
-            for tag_id in candidate_tags:
-                if tag_id not in tag_item_map:
-                    tag_item_map[tag_id] = []
-                tag_item_map[tag_id].append(int(row[0]))
-
-    if update:
-        with open('data/entities/entity_items.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            for item_id, item_name in item_map.items():
-                spamwriter.writerow(['Item', item_name])
-
-        with open('data/entities/entity_ingredients.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            for tag_id, tag_name in tag_map.items():
-                spamwriter.writerow(['Ingredient', tag_name])
-
-    return {
-        'master': {
-            'tag': tag_map,
-            'item': item_map
-        },
-        'lookup': {
-            'tag': tag_lookup,
-            'item': item_lookup
-        },
-        'mapping': {
-            'tag_item': tag_item_map,
-            'item_tag': item_tag_map
-        }
-    }
 
 
 def prep_recording():
@@ -140,8 +68,3 @@ def demo_transcript():
     [text_to_speech(v, i + 200, voice=voice_1) for i, v in enumerate(transcript)]
 
 
-if __name__ == '__main__':
-    # demo_transcript()
-    prep_recording()
-    # text_to_speech('Please repeat my order.         ________                     hello', 102, voice=voice_1)
-    # etl()
